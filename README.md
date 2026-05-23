@@ -1,7 +1,6 @@
 # 智聊 · 静态 HTML 原型
 
 > 对话聊天 + 对话生图 Web 应用 · **移动端优先** · 含用户端与运营后台共 17 个页面。
->
 > 本仓库是技术选型前的**纯静态 HTML / CSS / 原生 JS** 原型,用于走查交互、信息架构与 UI 规范。
 
 ---
@@ -28,14 +27,52 @@ python -m http.server 5500
 
 ---
 
-## 2. 目录结构
+## 2. 页面预览
+
+### 首页导航
+
+<img src="docs/images/index.png" alt="首页导航" width="900">
+
+### 用户端聊天
+
+<img src="docs/images/chat-pc.png" alt="PC 端聊天页面" width="900">
+
+<img src="docs/images/chat-mobile.png" alt="移动端聊天页面" width="360">
+
+### 移动端搜索 / 历史交互
+
+<img src="docs/images/history-mobile.png" alt="移动端搜索和历史交互" width="360">
+
+### 个人中心
+
+<img src="docs/images/personal-center-pc.png" alt="个人中心 PC 页面" width="900">
+
+### 运营后台
+
+<img src="docs/images/admin.png" alt="运营后台概览" width="900">
+
+<img src="docs/images/user-management.png" alt="用户管理" width="900">
+
+<img src="docs/images/Generate-Record.png" alt="生成记录" width="900">
+
+### 模型与接入配置
+
+<img src="docs/images/LLM.png" alt="对话模型管理" width="900">
+
+<img src="docs/images/integration.png" alt="接入配置" width="900">
+
+---
+
+## 3. 目录结构
 
 ```
 ChatGPTWebUI/
 ├── index.html                      # 全部页面的导航入口 (推荐入口)
 ├── README.md
 ├── docs/
-│   └── design-system.md            # ★ UI 设计规范 (色彩/字体/间距/组件)
+│   ├── design-system.md            # ★ UI 设计规范 (色彩/字体/间距/组件)
+│   ├── viewer.html                 # 文档离线预览页
+│   └── images/                     # README 页面预览图
 ├── assets/
 │   ├── css/
 │   │   ├── tokens.css              # Design Tokens (CSS 变量 + 暗/亮主题)
@@ -70,7 +107,7 @@ ChatGPTWebUI/
 
 ---
 
-## 3. 设计要点
+## 4. 设计要点
 
 ### 移动优先
 
@@ -93,7 +130,7 @@ ChatGPTWebUI/
 
 ---
 
-## 4. 页面清单
+## 5. 页面清单
 
 ### 用户端 (8)
 
@@ -124,7 +161,7 @@ ChatGPTWebUI/
 
 ---
 
-## 5. 后续技术选型建议
+## 6. 后续技术选型建议
 
 确认本套静态原型 UI 后,推荐演进路径(供决策时参考):
 
@@ -150,7 +187,7 @@ ChatGPTWebUI/
 
 ---
 
-## 6. 已知约定
+## 7. 已知约定
 
 - 所有日期、用户名、对话内容均为**示例数据**。
 - 所有 `<form>` 不会实际提交,登录按钮直接跳转到 `chat.html` / `dashboard.html` 以便走查。
@@ -159,7 +196,7 @@ ChatGPTWebUI/
 
 ---
 
-## 7. 走查清单 (建议)
+## 8. 走查清单 (建议)
 
 - [ ] 在 iPhone SE / iPhone 15 / iPad / 1280 PC 四档屏幕分别走完所有页面
 - [ ] 在 Chrome / Safari / 微信 H5 测试输入框聚焦后的虚拟键盘遮挡情况
