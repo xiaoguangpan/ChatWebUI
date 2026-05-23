@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理员登录 · 智聊后台</title>
+  <link rel="stylesheet" href="../assets/css/tokens.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <link rel="stylesheet" href="../assets/css/client.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card__logo" style="background:var(--brand);">A</div>
+      <h1 class="auth-card__title">管理员登录</h1>
+      <p class="auth-card__subtitle">智聊运营后台</p>
+
+      <form class="auth-form" onsubmit="event.preventDefault(); window.location.href='dashboard.html';">
+        <div class="c-field">
+          <label class="c-label">账号</label>
+          <input class="c-input c-input--lg" type="text" placeholder="管理员账号" required />
+        </div>
+        <div class="c-field">
+          <label class="c-label">密码</label>
+          <input class="c-input c-input--lg" type="password" placeholder="请输入密码" required />
+        </div>
+        <div class="c-field">
+          <label class="c-label">2FA 验证码</label>
+          <input class="c-input c-input--lg" type="text" placeholder="6 位动态验证码" />
+        </div>
+
+        <button class="c-btn c-btn--primary c-btn--lg c-btn--block" type="submit" style="margin-top: 8px;">
+          登录后台
+        </button>
+
+        <p class="auth-form__footer">
+          访问受限,仅授权账号可登录。<a href="../client/login.html">返回用户端</a>
+        </p>
+      </form>
+    </div>
+  </div>
+  <script src="../assets/js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 对话模型 · 智聊后台</title>
+  <link rel="stylesheet" href="../assets/css/tokens.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <link rel="stylesheet" href="../assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin">
+    <aside class="admin-sidebar"></aside>
+    <div class="sidebar-mask" data-toggle="sidebar" data-target=".admin-sidebar"></div>
+
+    <div class="admin-content">
+      <header class="admin-topbar"></header>
+
+      <div class="admin-page">
+        <div class="admin-page__header">
+          <div>
+            <h1 class="admin-page__title">AI 对话模型</h1>
+            <div class="admin-page__subtitle">管理可供用户选择的文本对话模型</div>
+          </div>
+          <button class="c-btn c-btn--primary" data-open-modal="modelModal">
+            <span data-icon="plus"></span>新增模型
+          </button>
+        </div>
+
+        <!-- 工具条 -->
+        <div class="toolbar">
+          <div class="toolbar__left">
+            <div class="c-search">
+              <span class="icon-search" data-icon="search" data-size="16"></span>
+              <input class="c-input" placeholder="搜索模型名称、Provider..." />
+            </div>
+            <select class="c-select" style="width: 140px;">
+              <option>全部状态</option>
+              <option>启用</option>
+              <option>禁用</option>
+              <option>维护中</option>
+            </select>
+            <select class="c-select" style="width: 140px;">
+              <option>全部 Provider</option>
+              <option>OpenAI 兼容</option>
+              <option>Anthropic 兼容</option>
+              <option>本地模型</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 模型卡片网格 -->
+        <div class="model-grid">
+
+          <div class="model-card">
+            <div class="model-card__head">
+              <div>
+                <div class="model-card__name">智聊 4</div>
+                <div class="model-card__provider">OpenAI 兼容 · gpt-4o</div>
+              </div>
+              <span class="c-badge c-badge--success"><span class="dot"></span>启用</span>
+            </div>
+            <div class="model-card__desc">主力对话模型,支持多轮上下文 128K,适用于复杂推理与代码任务。</div>
+            <div class="model-card__meta">
+              <span>积分倍率 <strong>×1.5</strong></span>
+              <span>上下文 <strong>128K</strong></span>
+              <span>近 7 日 <strong>168k</strong> 调用</span>
+            </div>
+            <div class="model-card__actions">
+              <button class="c-btn c-btn--ghost c-btn--sm" data-open-modal="modelModal"><span data-icon="edit-2" data-size="14"></span>编辑</button>
+              <button class="c-btn c-btn--ghost c-btn--sm"><span data-icon="activity" data-size="14"></span>统计</button>
+              <button class="c-btn c-btn--ghost c-btn--sm" style="margin-left:auto;">
+                <label class="c-switch"><input type="checkbox" checked /><span class="c-switch__slider"></span></label>
+              </button>
+            </div>
+          </div>
+
+          <div class="model-card">
+            <div class="model-card__head">
+              <div>
+                <div class="model-card__name">智聊 3.5</div>
+                <div class="model-card__provider">OpenAI 兼容 · gpt-3.5-turbo</div>
+              </div>
+              <span class="c-badge c-badge--success"><span class="dot"></span>启用</span>
+            </div>
+            <div class="model-card__desc">轻量对话,响应速度快,适合日常问答与简单任务。</div>
+            <div class="model-card__meta">
+              <span>积分倍率 <strong>×0.5</strong></span>
+              <span>上下文 <strong>16K</strong></span>
+              <span>近 7 日 <strong>92k</strong> 调用</span>
+            </div>
+            <div class="model-card__actions">
+              <button class="c-btn c-btn--ghost c-btn--sm" data-open-modal="modelModal"><span data-icon="edit-2" data-size="14"></span>编辑</button>
+              <button class="c-btn c-btn--ghost c-btn--sm"><span data-icon="activity" data-size="14"></span>统计</button>
+              <span style="margin-left:auto;"><label class="c-switch"><input type="checkbox" checked /><span class="c-switch__slider"></span></label></span>
+            </div>
+          </div>
+
+          <div class="model-card">
+            <div class="model-card__head">
+              <div>
+                <div class="model-card__name">深思 Pro</div>
+                <div class="model-card__provider">Anthropic 兼容 · claude-3-opus</div>
+              </div>
+              <span class="c-badge c-badge--success"><span class="dot"></span>启用</span>
+            </div>
+            <div class="model-card__desc">擅长长文理解、伦理推理与文本总结,上下文 200K。</div>
+            <div class="model-card__meta">
+              <span>积分倍率 <strong>×2.0</strong></span>
+              <span>上下文 <strong>200K</strong></span>
+              <span>近 7 日 <strong>42k</strong> 调用</span>
+            </div>
+            <div class="model-card__actions">
+              <button class="c-btn c-btn--ghost c-btn--sm" data-open-modal="modelModal"><span data-icon="edit-2" data-size="14"></span>编辑</button>
+              <button class="c-btn c-btn--ghost c-btn--sm"><span data-icon="activity" data-size="14"></span>统计</button>
+              <span style="margin-left:auto;"><label class="c-switch"><input type="checkbox" checked /><span class="c-switch__slider"></span></label></span>
+            </div>
+          </div>
+
+          <div class="model-card">
+            <div class="model-card__head">
+              <div>
+                <div class="model-card__name">深思 Sonnet</div>
+                <div class="model-card__provider">Anthropic 兼容 · claude-3-sonnet</div>
+              </div>
+              <span class="c-badge c-badge--warning"><span class="dot"></span>维护中</span>
+            </div>
+            <div class="model-card__desc">平衡型对话模型,处理速度与质量兼顾。</div>
+            <div class="model-card__meta">
+              <span>积分倍率 <strong>×1.0</strong></span>
+              <span>上下文 <strong>200K</strong></span>
+              <span>近 7 日 <strong>0</strong> 调用</span>
+            </div>
+            <div class="model-card__actions">
+              <button class="c-btn c-btn--ghost c-btn--sm" data-open-modal="modelModal"><span data-icon="edit-2" data-size="14"></span>编辑</button>
+              <button class="c-btn c-btn--ghost c-btn--sm"><span data-icon="activity" data-size="14"></span>统计</button>
+              <span style="margin-left:auto;"><label class="c-switch"><input type="checkbox" /><span class="c-switch__slider"></span></label></span>
+            </div>
+          </div>
+
+          <div class="model-card">
+            <div class="model-card__head">
+              <div>
+                <div class="model-card__name">青狼 Qwen2-72B</div>
+                <div class="model-card__provider">本地模型 · vLLM 部署</div>
+              </div>
+              <span class="c-badge c-badge--success"><span class="dot"></span>启用</span>
+            </div>
+            <div class="model-card__desc">本地部署的中文增强模型,数据不出境,适用于企业内部场景。</div>
+            <div class="model-card__meta">
+              <span>积分倍率 <strong>×0.3</strong></span>
+              <span>上下文 <strong>32K</strong></span>
+              <span>近 7 日 <strong>21k</strong> 调用</span>
+            </div>
+            <div class="model-card__actions">
+              <button class="c-btn c-btn--ghost c-btn--sm" data-open-modal="modelModal"><span data-icon="edit-2" data-size="14"></span>编辑</button>
+              <button class="c-btn c-btn--ghost c-btn--sm"><span data-icon="activity" data-size="14"></span>统计</button>
+              <span style="margin-left:auto;"><label class="c-switch"><input type="checkbox" checked /><span class="c-switch__slider"></span></label></span>
+            </div>
+          </div>
+
+          <div class="model-card">
+            <div class="model-card__head">
+              <div>
+                <div class="model-card__name">极速 mini</div>
+                <div class="model-card__provider">OpenAI 兼容 · gpt-4o-mini</div>
+              </div>
+              <span class="c-badge"><span class="dot"></span>已禁用</span>
+            </div>
+            <div class="model-card__desc">超低延迟轻量模型,已下线,保留作历史记录。</div>
+            <div class="model-card__meta">
+              <span>积分倍率 <strong>×0.2</strong></span>
+              <span>上下文 <strong>128K</strong></span>
+              <span>近 7 日 <strong>0</strong> 调用</span>
+            </div>
+            <div class="model-card__actions">
+              <button class="c-btn c-btn--ghost c-btn--sm" data-open-modal="modelModal"><span data-icon="edit-2" data-size="14"></span>编辑</button>
+              <button class="c-btn c-btn--ghost c-btn--sm"><span data-icon="activity" data-size="14"></span>统计</button>
+              <span style="margin-left:auto;"><label class="c-switch"><input type="checkbox" /><span class="c-switch__slider"></span></label></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增/编辑模型 Modal -->
+  <div class="c-modal-mask" id="modelModal">
+    <div class="c-modal c-modal--lg">
+      <div class="c-modal__header">
+        <h3 class="c-modal__title">编辑 AI 对话模型</h3>
+        <button class="c-icon-btn" data-close-modal><span data-icon="x"></span></button>
+      </div>
+      <div class="c-modal__body">
+        <div class="form-grid form-grid--2">
+          <div class="c-field">
+            <label class="c-label">模型显示名称</label>
+            <input class="c-input" value="智聊 4" />
+            <span class="c-help">用户在选择列表中看到的名称</span>
+          </div>
+          <div class="c-field">
+            <label class="c-label">Provider 类型</label>
+            <select class="c-select">
+              <option>OpenAI 兼容</option>
+              <option>Anthropic 兼容</option>
+              <option>本地模型 / 自部署</option>
+              <option>Google Gemini 兼容</option>
+            </select>
+          </div>
+          <div class="c-field">
+            <label class="c-label">API Endpoint</label>
+            <input class="c-input" value="https://api.openai.com/v1" />
+          </div>
+          <div class="c-field">
+            <label class="c-label">真实模型 ID</label>
+            <input class="c-input" value="gpt-4o" />
+          </div>
+          <div class="c-field">
+            <label class="c-label">API Key</label>
+            <input class="c-input" type="password" value="sk-************************" />
+          </div>
+          <div class="c-field">
+            <label class="c-label">上下文长度 (tokens)</label>
+            <input class="c-input" type="number" value="128000" />
+          </div>
+          <div class="c-field">
+            <label class="c-label">输入价格 (积分 / 1K token)</label>
+            <input class="c-input" type="number" step="0.01" value="0.30" />
+          </div>
+          <div class="c-field">
+            <label class="c-label">输出价格 (积分 / 1K token)</label>
+            <input class="c-input" type="number" step="0.01" value="1.00" />
+          </div>
+        </div>
+
+        <div class="c-field" style="margin-top: 16px;">
+          <label class="c-label">模型描述 (展示给用户)</label>
+          <textarea class="c-textarea" rows="2">主力对话模型,支持多轮上下文 128K,适用于复杂推理与代码任务。</textarea>
+        </div>
+
+        <div class="c-field" style="margin-top: 16px;">
+          <label class="c-label">System Prompt (默认人设)</label>
+          <textarea class="c-textarea" rows="3">You are a helpful, harmless and honest AI assistant. Reply in user's language.</textarea>
+        </div>
+
+        <div style="display:flex; gap:16px; margin-top: 16px; flex-wrap:wrap;">
+          <label style="display:flex; gap:8px; align-items: center;">
+            <label class="c-switch"><input type="checkbox" checked /><span class="c-switch__slider"></span></label>
+            <span>启用流式响应 (SSE)</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items: center;">
+            <label class="c-switch"><input type="checkbox" checked /><span class="c-switch__slider"></span></label>
+            <span>对所有用户可见</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items: center;">
+            <label class="c-switch"><input type="checkbox" /><span class="c-switch__slider"></span></label>
+            <span>仅 Plus 会员可用</span>
+          </label>
+        </div>
+      </div>
+      <div class="c-modal__footer">
+        <button class="c-btn c-btn--danger" data-close-modal><span data-icon="trash" data-size="14"></span>删除</button>
+        <button class="c-btn c-btn--secondary" data-close-modal>取消</button>
+        <button class="c-btn c-btn--primary" data-close-modal>保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/common.js"></script>
+  <script src="_partials.js"></script>
+  <script>mountAdmin({ active: 'ai-models', title: 'AI 对话模型' });</script>
+</body>
+</html>
