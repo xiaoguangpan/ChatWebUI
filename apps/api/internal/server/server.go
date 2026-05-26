@@ -155,8 +155,8 @@ func (c Config) ValidateForServe() error {
 	if isWeakAppSecret(c.AppSecret) {
 		return errors.New("APP_SECRET must be set to a long random value when HOST listens publicly")
 	}
-	if !c.AdminPasswordSet || isWeakAdminPassword(c.AdminPassword) {
-		return errors.New("ADMIN_PASSWORD must be set to a non-default password with at least 10 characters when HOST listens publicly")
+	if !c.AdminPasswordSet || isDefaultAdminPassword(c.AdminPassword) {
+		return errors.New("ADMIN_PASSWORD must be set to a non-default password when HOST listens publicly")
 	}
 	for _, origin := range c.AllowedOrigins {
 		if origin == "*" {
@@ -171,18 +171,8 @@ func isPublicListenHost(host string) bool {
 	return host == "" || host == "0.0.0.0" || host == "::" || host == "[::]"
 }
 
-func isWeakAdminPassword(password string) bool {
-	password = strings.TrimSpace(password)
-	if len(password) < 10 {
-		return true
-	}
-	switch password {
-	case defaultDevAdminPassword, "replace-with-a-strong-admin-password":
-		return true
-	default:
-		lower := strings.ToLower(password)
-		return strings.Contains(lower, "replace") || strings.Contains(lower, "change")
-	}
+func isDefaultAdminPassword(password string) bool {
+	return strings.TrimSpace(password) == defaultDevAdminPassword
 }
 
 func isWeakAppSecret(secret string) bool {
