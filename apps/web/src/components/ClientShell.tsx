@@ -6,7 +6,7 @@ import { SearchModalProvider } from './SearchModal';
 
 /**
  * 用户端通用骨架:左侧 Sidebar + 主区域 Outlet。
- * 主区域内的 topbar 由各页面自行渲染,以贴合原型每页 topbar 配置不同的设计。
+ * 主区域内的 topbar 由各页面自行渲染,以匹配每页不同的操作区。
  */
 export const ClientShell: FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

@@ -180,7 +180,8 @@ func isWeakAdminPassword(password string) bool {
 	case defaultDevAdminPassword, "replace-with-a-strong-admin-password":
 		return true
 	default:
-		return strings.Contains(strings.ToLower(password), "replace-with")
+		lower := strings.ToLower(password)
+		return strings.Contains(lower, "replace") || strings.Contains(lower, "change")
 	}
 }
 
@@ -193,7 +194,8 @@ func isWeakAppSecret(secret string) bool {
 	case "chatwebui-dev-secret-change-me", "change-me-to-a-long-random-secret", "replace-with-a-long-random-secret", "dev-only-please-change-to-a-long-random-secret":
 		return true
 	default:
-		return false
+		lower := strings.ToLower(secret)
+		return strings.Contains(lower, "replace") || strings.Contains(lower, "change")
 	}
 }
 
@@ -225,7 +227,7 @@ func boolEnv(key string, fallback bool) bool {
 }
 
 func loadDotEnvFiles() {
-	for _, path := range []string{".env", "apps/api/.env"} {
+	for _, path := range []string{".env"} {
 		data, err := os.ReadFile(path)
 		if err != nil {
 			continue

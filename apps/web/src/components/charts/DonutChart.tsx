@@ -36,7 +36,7 @@ function polar(cx: number, cy: number, r: number, angle: number) {
 }
 
 /**
- * SVG 环形图。原型用 Canvas drawDonut,这里用 SVG 描出每段扇形。
+ * SVG 环形图,用 path 描出每段扇形。
  */
 export const DonutChart: FC<Props> = ({ data, size = 220, innerRatio = 0.62 }) => {
   const total = data.reduce((s, p) => s + p.value, 0) || 1;

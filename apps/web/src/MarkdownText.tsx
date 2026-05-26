@@ -5,7 +5,7 @@ import { MermaidBlock } from './MermaidBlock';
 
 /**
  * 将流式返回的 Markdown 渲染为 HTML。
- * - 直接复用原型 `.msg__content` 下的 <p>/<pre>/<code>/<ul>/<ol>/<h*>/<table> 样式
+ * - 复用 `.msg__content` 下的 <p>/<pre>/<code>/<ul>/<ol>/<h*>/<table> 样式
  * - `language-mermaid` 代码块改用 MermaidBlock 异步渲染流程图/脑图
  */
 

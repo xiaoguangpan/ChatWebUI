@@ -2,7 +2,7 @@
 
 > 多模型 AI 聊天、生图、语音与运营后台系统 · React/Vite 用户端 + Go API + PostgreSQL + Redis。
 
-ChatWebUI 是一套面向真实运行的 Chat WebUI 系统，包含用户端聊天、生图、个人中心、积分体系，以及后台模型服务、用户管理、生成记录、积分流水、系统日志等运营能力。项目已从静态原型收敛为可部署的前后端 monorepo。
+ChatWebUI 是一套面向真实运行的 Chat WebUI 系统，包含用户端聊天、生图、个人中心、积分体系，以及后台模型服务、用户管理、生成记录、积分流水、系统日志等运营能力。
 
 ---
 
@@ -34,21 +34,28 @@ REDIS_ADDR=127.0.0.1:6379
 
 ### Docker 部署
 
+项目只保留根目录一份 `.env.example`，本地开发和 Docker 部署都从这份文件复制 `.env`。
+
 ```bash
 cp .env.example .env
-docker compose up -d --build
 ```
 
-上线前必须修改 `.env`：
+上线前必须先填写 `.env` 中的安全项；这些值在 `.env.example` 中保持为空，避免误用示例密码：
 
 ```text
-POSTGRES_PASSWORD=replace-with-a-strong-password
-APP_SECRET=replace-with-a-long-random-secret
-ADMIN_PASSWORD=replace-with-a-strong-admin-password
+POSTGRES_PASSWORD=
+APP_SECRET=
+ADMIN_PASSWORD=
 CORS_ALLOWED_ORIGINS=https://your-domain.com
 ```
 
-Docker 默认 Web 入口为 `http://127.0.0.1:8080`。PostgreSQL、Redis 只在 Compose 内网暴露，上传文件写入 `api-uploads` 卷。
+填写完成后启动：
+
+```bash
+docker compose up -d --build
+```
+
+Docker 默认 Web 入口为 `http://127.0.0.1:8080`。PostgreSQL、Redis 只在 Compose 内网暴露，上传文件写入 `api-uploads` 卷。`VITE_API_BASE_URL` 默认为空，表示前端通过 Nginx 同源反代访问 `/api`；如果 Web 与 API 分离部署，再填入 API 外部地址。
 
 ---
 
@@ -71,8 +78,8 @@ ChatWebUI/
 │       ├── migrations/               # PostgreSQL 迁移
 │       └── Dockerfile
 ├── docs/
-│   ├── TECH_SELECTION.md             # 固定技术选型和验收基线
-│   └── design-system.md              # UI 设计说明
+│   ├── TECH_SELECTION.md             # 技术架构
+│   └── design-system.md              # 产品界面规范
 ├── docker-compose.yml
 ├── package.json
 └── go.work
@@ -165,7 +172,7 @@ React/Vite Web
 
 ## 6. 配置说明
 
-`.env` 只保存基础设施和安全配置，不保存供应商、模型、模型价格、默认模型等业务配置。
+`.env` 只保存基础设施和安全配置，不保存供应商、模型、模型价格、默认模型等业务配置。Docker 部署使用 `POSTGRES_*` 生成 API 的 `DATABASE_URL`；本地非 Docker 开发如需覆盖默认连接，可额外设置 `DATABASE_URL`、`REDIS_ADDR` 和 `UPLOAD_DIR`。
 
 | 变量 | 说明 |
 | --- | --- |
@@ -180,12 +187,15 @@ React/Vite Web
 | `ANONYMOUS_CHAT_LIMIT` | 未登录匿名聊天次数，默认 `3`，设为 `0` 可关闭 |
 | `SEED_DEMO_USER` | 是否创建演示用户，默认 `false` |
 | `SESSION_TTL_HOURS` | 登录会话有效期，默认 `168` 小时 |
+| `VITE_API_BASE_URL` | 前端构建时 API 地址，Docker 同源反代模式保持空 |
 
 ---
 
 ## 7. 安全约定
 
-- Provider API Key 加密存入 PostgreSQL，前端只展示脱敏值。
+- Provider API Key 使用 AES-GCM 加密存入 PostgreSQL，前端只展示脱敏值。
+- 用户密码使用 bcrypt 哈希保存，数据库不保存明文密码。
+- 登录 Token 只在浏览器保存原文，数据库保存 Token 哈希。
 - 前后台 Token 分离存储，避免用户端和后台互相覆盖登录态。
 - 后台 API 必须管理员 Token，普通用户访问返回 403。
 - 生产公网监听时，弱 `APP_SECRET`、默认管理员密码、`*` CORS 会阻止 API 启动。
@@ -218,13 +228,14 @@ npm --prefix apps/web run build
 
 ## 9. 发布流程
 
-1. 设置 `.env` 中的强密码和域名白名单。
-2. 确认 VPS 已安装 Docker 和 Docker Compose。
-3. 执行 `docker compose up -d --build`。
-4. 访问 `/healthz` 确认 API、PostgreSQL、Redis 正常。
-5. 使用管理员账号进入 `/admin/login`。
-6. 在后台模型服务中新增供应商、拉取模型、导入模型并设置默认模型。
-7. 完成一次真实聊天、生图、积分扣费和后台记录核对。
+1. 从根目录 `.env.example` 复制 `.env`。
+2. 设置 `.env` 中的强密码和域名白名单。
+3. 确认 VPS 已安装 Docker 和 Docker Compose。
+4. 执行 `docker compose up -d --build`。
+5. 访问 `/healthz` 确认 API、PostgreSQL、Redis 正常。
+6. 使用管理员账号进入 `/admin/login`。
+7. 在后台模型服务中新增供应商、拉取模型、导入模型并设置默认模型。
+8. 完成一次真实聊天、生图、积分扣费和后台记录核对。
 
 ---
 

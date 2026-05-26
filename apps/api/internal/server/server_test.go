@@ -45,6 +45,13 @@ func TestAuthRegisterLoginLogoutAndMe(t *testing.T) {
 	if registered.User.Name == "" || registered.User.Name == "用户.com" {
 		t.Fatalf("unexpected generated nickname: %q", registered.User.Name)
 	}
+	var storedToken string
+	if err := app.store.db.QueryRow(context.Background(), `SELECT token FROM sessions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1`, registered.User.ID).Scan(&storedToken); err != nil {
+		t.Fatal(err)
+	}
+	if storedToken == registered.Token || storedToken != sessionTokenHash(registered.Token) {
+		t.Fatalf("session token should be stored as hash, stored=%q raw=%q", storedToken, registered.Token)
+	}
 
 	loginRes := postJSON(t, app.server.URL+"/api/auth/login", `{"phone":"user1@example.com","password":"secret123"}`, "")
 	expectStatus(t, loginRes, http.StatusOK, "login")

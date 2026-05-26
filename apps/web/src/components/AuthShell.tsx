@@ -6,13 +6,13 @@ type Props = {
   title: string;
   subtitle: string;
   children: ReactNode;
-  /** logo 背景颜色,默认沿用原型的主色调 */
+  /** logo 背景颜色 */
   logoBg?: string;
 };
 
 /**
  * 登录 / 注册页通用骨架。
- * 完全沿用原型 .auth-page / .auth-card 结构。
+ * 认证页通用 .auth-page / .auth-card 结构。
  */
 export const AuthShell: FC<Props> = ({ logo, title, subtitle, children, logoBg }) => {
   return (

@@ -7,10 +7,11 @@ ChatWebUI is a React/Vite frontend plus a Go API backed by PostgreSQL and Redis.
 - `apps/web/`: React 18 + Vite + TypeScript application.
 - `apps/api/`: Go monolith API. Entrypoint: `cmd/server/main.go`.
 - `apps/api/migrations/`: PostgreSQL schema migrations.
-- `docs/TECH_SELECTION.md`: fixed technical architecture and acceptance baseline.
+- `docs/TECH_SELECTION.md`: technical architecture.
 - `docs/`: architecture, technical decisions, and product notes.
 
 Production code must not use SQLite, in-memory stores, or frontend mock data as business data sources.
+The repository keeps a single root `.env.example`; do not add app-level env examples.
 
 ## Commands
 

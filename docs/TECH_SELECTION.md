@@ -1,80 +1,117 @@
-# ChatWebUI 技术选型
+# ChatWebUI 技术架构
 
-本项目按“可运营的多模型 ChatWebUI”重构，前端 UI 保持现有视觉与交互为主，后端、数据库和配置体系按正式系统落地。
+ChatWebUI 是一套多模型 AI 聊天、生图、语音与运营后台系统。系统采用前后端分离的 monorepo 结构，用户端和运营后台共用 React Web 应用，业务 API 由 Go 服务提供，核心业务数据保存在 PostgreSQL，短期状态和限流使用 Redis。
 
-## 总体架构
+## 架构总览
 
 ```text
-React/Vite Web
+Browser
+  -> React/Vite Web
+  -> Nginx
   -> Go HTTP API
-  -> PostgreSQL 主数据库
-  -> Redis 缓存/限流/轻量任务状态
-  -> 本机 uploads 目录（头像等轻量文件）
-  -> Provider Adapters（OpenAI-compatible / 其他协议）
+  -> PostgreSQL
+  -> Redis
+  -> Upload Volume
+  -> External Model Providers
 ```
 
-## 固定选型
+## 固定技术栈
 
-- 前端：React 18 + Vite + TypeScript。
-- UI：保留现有自研 CSS tokens/styles，不引入大型 UI 框架。
-- 聊天运行时：自研 React 聊天界面 + 后端 SSE，避免未接入运行时增加维护成本。
-- 后端：Go 单体 API，标准库 HTTP 路由优先，按模块拆分 handler/service/store。
-- 数据库：PostgreSQL，作为用户、会话、消息、模型配置、积分、审计的唯一事实来源。
-- 缓存：Redis，用于限流、短期状态、后续异步任务队列。
-- SQL：迁移文件固定在 `apps/api/migrations/`；业务代码使用 typed repository，避免散落 SQL。
-- 密钥：Provider API Key 加密入库，前端只展示 masked key。
-- 部署：本地可直接使用 PostgreSQL/Redis；VPS 使用 Docker Compose。
+| 层级 | 技术 | 用途 |
+| --- | --- | --- |
+| Web | React 18、Vite、TypeScript | 用户端与运营后台 |
+| UI | CSS Tokens、Lucide Icons、Markdown/Mermaid 渲染 | 统一界面和对话内容渲染 |
+| API | Go HTTP Server | 鉴权、模型调用、计费、审计、后台管理 |
+| Database | PostgreSQL | 用户、会话、消息、模型、积分、日志 |
+| Cache | Redis | 匿名试用次数、登录失败限流、短期状态 |
+| Deploy | Docker Compose、Nginx | VPS 部署与反向代理 |
+
+## 数据职责
+
+PostgreSQL 是系统唯一业务事实来源，保存以下数据：
+
+- 用户账号、昵称、头像、方案、积分。
+- 登录会话、登录历史、审计日志。
+- 对话会话、消息内容、生成记录。
+- 模型供应商、模型清单、默认模型、模型权重、连通性状态。
+- 积分策略和积分流水。
+
+Redis 只保存短期数据：
+
+- 未登录匿名聊天次数。
+- 登录失败次数限制。
+- 后续可扩展的短期任务状态。
+
+## 模型配置
+
+模型供应商和模型清单通过后台模型服务维护，不依赖本地模型配置文件。Provider API Key 在服务端接收后加密写入 PostgreSQL，前端只显示脱敏值。
+
+模型支持的能力类型：
+
+- `chat`：文字对话。
+- `image`：图片生成。
+- `speech`：语音生成。
+- `embedding`、`tool`、`vision`：扩展能力。
+
+默认模型必须满足：
+
+- 模型已启用。
+- 模型对所有用户可见。
+- 模型能力与默认角色匹配。
+
+## 鉴权与权限
+
+- 用户端和后台使用独立 Token 存储，避免前后台登录态互相覆盖。
+- Token 由后端生成，数据库只保存 Token 哈希。
+- 用户密码使用 bcrypt 哈希保存。
+- Provider API Key 使用 `APP_SECRET` 派生密钥，通过 AES-GCM 加密保存。
+- 后台接口必须使用管理员 Token；普通用户访问后台接口返回 403。
+- 会话默认 168 小时过期，可通过 `SESSION_TTL_HOURS` 调整。
+
+## 积分计费
+
+积分策略分为两类：
+
+- 按次计费：文字、图片、语音、其他能力分别配置单次积分。
+- 按 Token 计费：根据输入和输出 Token 估算积分。
+
+图片模型固定按次计费，避免不同供应商图片 Token 口径不一致造成费用不可控。
+
+## 文件与上传
+
+- 本地上传文件写入 `UPLOAD_DIR`。
+- Docker 部署写入 `api-uploads` volume。
+- 普通 JSON 请求体默认限制 4MB。
+- multipart 上传默认限制 25MB。
+- 头像接口请求体限制 10MB，头像单文件限制 8MB。
+- 大附件、长期文件和公开资源可后续迁移到对象存储。
 
 ## 配置边界
 
-`.env` 只允许保存基础设施配置：
+项目只保留根目录一份 `.env.example`。`.env` 用于基础设施和安全配置，不保存模型供应商、模型列表、默认模型、计费策略等业务配置。
 
-- `DATABASE_URL`
-- `REDIS_ADDR`
-- `APP_SECRET`
-- `UPLOAD_DIR`
-- `HOST` / `PORT`
-- `ADMIN_ACCOUNT` / `ADMIN_PASSWORD`
-- `ANONYMOUS_CHAT_LIMIT`
-- `SESSION_TTL_HOURS`
-- CORS 白名单
+典型配置项：
 
-`.env` 不保存供应商、模型、模型价格、默认模型等业务配置。业务配置必须进入 PostgreSQL，并由后台管理维护。
+- PostgreSQL：`POSTGRES_DB`、`POSTGRES_USER`、`POSTGRES_PASSWORD`
+- Web：`WEB_PORT`、`VITE_API_BASE_URL`
+- API 安全：`APP_SECRET`、`ADMIN_ACCOUNT`、`ADMIN_PASSWORD`
+- 访问控制：`CORS_ALLOWED_ORIGINS`
+- 运行策略：`ANONYMOUS_CHAT_LIMIT`、`SESSION_TTL_HOURS`
 
-模型供应商、模型清单、默认模型、计费策略都由 PostgreSQL 保存，并通过后台模型服务维护；系统启动不依赖本地模型清单文件。
+Docker Compose 使用 `POSTGRES_*` 拼接 API 容器内的 `DATABASE_URL`，并固定连接 Compose 内网的 Redis。非 Docker 本地开发可以按需额外设置 `DATABASE_URL`、`REDIS_ADDR`、`UPLOAD_DIR` 覆盖默认值。
 
-## 账号规则
+## 部署形态
 
-- 用户注册：手机号或邮箱 + 密码 + 确认密码，不接短信/邮件验证码。
-- 后台登录：账号密码，不接 2FA。
-- 首次启动创建管理员。公网部署必须通过 `ADMIN_PASSWORD` 指定强密码，不允许使用开发默认密码。
-
-## 本地开发环境
-
-本机已确认：
-
-- PostgreSQL：`127.0.0.1:5432`
-- Redis：`127.0.0.1:6379`
-
-本地开发数据库：
+本地开发：
 
 ```text
-DATABASE_URL=postgres://chatwebui:chatwebui_dev_2026@127.0.0.1:5432/chatwebui?sslmode=disable
-REDIS_ADDR=127.0.0.1:6379
+Vite Dev Server -> Go API -> local PostgreSQL / Redis
 ```
 
-## 认证与权限
+Docker 部署：
 
-- 登录态使用 PostgreSQL `sessions` 表保存，前端只保存 Bearer Token，会话默认 168 小时过期。
-- 注册、登录、健康检查是公开接口；用户端 API 必须携带有效用户 Token。
-- 后台 API 必须携带有效管理员 Token，普通用户 Token 返回 403。
-- 退出登录会删除服务端 session，不能只清理前端本地状态。
-- 匿名聊天默认允许 3 次，使用 Redis 做短期限流；登录失败同样有短期限流。
+```text
+Nginx Web Container -> API Container -> PostgreSQL Container / Redis Container
+```
 
-## 验收原则
-
-- 前端不再依赖 `data/mock.ts` 作为业务数据源。
-- 生产后端不再使用 SQLite 或内存 store。
-- 每个 API 有可运行测试覆盖。
-- 积分策略只保留两类产品能力：按次计费与按 Token 计费。图片、语音默认归入按次计费，避免策略体系膨胀。
-- 关键流程必须可真实跑通：注册、登录、模型导入、模型选择、聊天、会话历史、积分扣费、生成记录、后台统计。
+生产环境建议使用 HTTPS 反向代理，并将 PostgreSQL、Redis 限制在内网访问。

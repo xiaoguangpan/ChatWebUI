@@ -6,8 +6,7 @@
 
 /* ============================================================
    React shell reset
-   原型用 <a>/<button> 混用,这里统一用 <button> 触发,
-   需要重置默认按钮样式以贴近原型外观。
+   侧栏统一用 <button> 触发操作,这里重置默认按钮样式。
    ============================================================ */
 
 html,
@@ -103,7 +102,7 @@ button {
   border-color: var(--border-strong);
 }
 
-/* Composer 附件预览 (原型未涉及,保持轻量) */
+/* Composer 附件预览 */
 .composer__attachments {
   display: flex;
   flex-wrap: wrap;
@@ -133,8 +132,7 @@ button {
   background: #dc2626;
 }
 
-/* Composer hint:原型用 u-md-only,此处直接展示在桌面/移动均可,
-   与原型在 md 屏幕上的提示一致。 */
+/* Composer hint */
 .composer__hint {
   padding: 8px 0 4px;
 }
@@ -296,8 +294,7 @@ button {
 
 /* ============================================================
    流式 Markdown 渲染样式
-   原型消息内容直接使用 <p>/<strong>/<pre>,
-   流式 Markdown 还会出现 <ul>/<ol>/<h1-3>,
+   Markdown 消息内容包含 <p>/<strong>/<pre>/<ul>/<ol>/<h1-3>,
    这里仅补齐表单元素样式,使其与 .msg__content 协调。
    ============================================================ */
 .msg__content ul,
@@ -469,7 +466,7 @@ button {
 
 /* ============================================================
    各路由页面的局部补丁
-   原型用大量内联 style,React 化时尽量提到 className
+   各路由页面复用样式集中到 className
    ============================================================ */
 
 /* ----- Profile page ----- */
@@ -702,7 +699,7 @@ img.generations-image-placeholder {
   background: var(--bg-elevated);
 }
 
-/* ----- 让 sidebar-user 在 Profile 页面下激活时贴近原型 ----- */
+/* ----- Profile 页面下的 sidebar-user 激活态 ----- */
 .sidebar-user.is-active-user {
   background: var(--bg-active);
 }

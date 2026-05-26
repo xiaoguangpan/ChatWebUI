@@ -11,7 +11,7 @@ type Props = {
 };
 
 /**
- * 用户端侧栏。布局完全沿用原型 .app-sidebar / .sidebar-* 样式,
+ * 用户端侧栏。布局使用 .app-sidebar / .sidebar-* 样式,
  * 用 react-router 的 NavLink 自动处理 is-active。
  */
 export const ClientSidebar: FC<Props> = ({ isOpen, onToggle, onClose }) => {

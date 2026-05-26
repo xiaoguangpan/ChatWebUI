@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -398,7 +400,7 @@ func (s *PostgresStore) UserByToken(token string) (User, bool) {
 		SELECT u.id, u.account, u.name, u.role, u.plan, u.status, u.points, u.chats, u.images, u.avatar_url, u.created_at, u.last_active
 		FROM sessions s JOIN users u ON u.id=s.user_id
 		WHERE s.token=$1 AND (s.expires_at IS NULL OR s.expires_at > now())
-	`, token).Scan(&user.ID, &user.Phone, &user.Name, &user.Role, &user.Plan, &user.Status, &user.Points, &user.Chats, &user.Images, &user.AvatarURL, &createdAt, &lastActive)
+	`, sessionTokenHash(token)).Scan(&user.ID, &user.Phone, &user.Name, &user.Role, &user.Plan, &user.Status, &user.Points, &user.Chats, &user.Images, &user.AvatarURL, &createdAt, &lastActive)
 	if err != nil {
 		return User{}, false
 	}
@@ -411,7 +413,7 @@ func (s *PostgresStore) DeleteSession(token string) {
 	if strings.TrimSpace(token) == "" {
 		return
 	}
-	_, _ = s.db.Exec(context.Background(), `DELETE FROM sessions WHERE token=$1`, strings.TrimSpace(token))
+	_, _ = s.db.Exec(context.Background(), `DELETE FROM sessions WHERE token=$1`, sessionTokenHash(token))
 }
 
 func (s *PostgresStore) ListUsers() []User {
@@ -1456,12 +1458,18 @@ func (s *PostgresStore) createUser(ctx context.Context, account string, password
 
 func (s *PostgresStore) createSession(ctx context.Context, userID string) (string, error) {
 	token := randomToken()
+	tokenHash := sessionTokenHash(token)
 	if s.sessionTTL <= 0 {
-		_, err := s.db.Exec(ctx, `INSERT INTO sessions (token, user_id) VALUES ($1,$2)`, token, userID)
+		_, err := s.db.Exec(ctx, `INSERT INTO sessions (token, user_id) VALUES ($1,$2)`, tokenHash, userID)
 		return token, err
 	}
-	_, err := s.db.Exec(ctx, `INSERT INTO sessions (token, user_id, expires_at) VALUES ($1,$2,now()+($3::bigint * interval '1 second'))`, token, userID, int64(s.sessionTTL.Seconds()))
+	_, err := s.db.Exec(ctx, `INSERT INTO sessions (token, user_id, expires_at) VALUES ($1,$2,now()+($3::bigint * interval '1 second'))`, tokenHash, userID, int64(s.sessionTTL.Seconds()))
 	return token, err
+}
+
+func sessionTokenHash(token string) string {
+	sum := sha256.Sum256([]byte(strings.TrimSpace(token)))
+	return hex.EncodeToString(sum[:])
 }
 
 func (s *PostgresStore) userByWhere(ctx context.Context, where string) (User, bool) {

@@ -19,7 +19,7 @@ type Props = {
 
 /**
  * Composer 内的模型选择 pill + 浮层。
- * 浮层用 position: fixed,弹出在触发器上方,与原型行为一致。
+ * 浮层用 position: fixed,弹出在触发器上方。
  */
 export const ModelPicker: FC<Props> = ({ selected, options, onSelect }) => {
   const [open, setOpen] = useState(false);

@@ -10,7 +10,7 @@ type Props = {
 
 /**
  * 客户端子页通用 topbar。左上返回箭头、居中标题、右侧可塞自定义按钮。
- * 与 .app-topbar 共用样式,保证移动端贴合原型。
+ * 与 .app-topbar 共用样式,保证移动端页面标题区一致。
  */
 export const SubPageHeader: FC<Props> = ({ title, back, right }) => {
   const navigate = useNavigate();
