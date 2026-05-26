@@ -1,208 +1,242 @@
-# 智聊 · 静态 HTML 原型
+# ChatWebUI
 
-> 对话聊天 + 对话生图 Web 应用 · **移动端优先** · 含用户端与运营后台共 17 个页面。
-> 本仓库是技术选型前的**纯静态 HTML / CSS / 原生 JS** 原型,用于走查交互、信息架构与 UI 规范。
+> 多模型 AI 聊天、生图、语音与运营后台系统 · React/Vite 用户端 + Go API + PostgreSQL + Redis。
+
+ChatWebUI 是一套面向真实运行的 Chat WebUI 系统，包含用户端聊天、生图、个人中心、积分体系，以及后台模型服务、用户管理、生成记录、积分流水、系统日志等运营能力。项目已从静态原型收敛为可部署的前后端 monorepo。
 
 ---
 
 ## 1. 快速开始
 
-本项目是纯静态原型,不依赖后端服务。推荐从 `index.html` 进入导航页,再点击查看用户端、运营后台和设计资产。
+### 本地开发
 
-### 方案一:直接静态打开
-
-直接用浏览器打开项目根目录下的 `index.html`。
-
-适合快速走查页面和离线预览。`UI 设计规范`、`Design Tokens (CSS 变量)`、`README` 已提供离线预览入口,无需启动本地服务。
-
-### 方案二:使用 Python 内置静态服务
-
-如果希望以本地 HTTP 地址访问,可在项目根目录执行:
+本地需要准备 PostgreSQL、Redis、Node.js 和 Go。
 
 ```bash
-python -m http.server 5500
+npm --prefix apps/web install
+npm run dev:api
+npm run dev:web
 ```
 
-然后打开 [http://localhost:5500](http://localhost:5500)。
+默认访问地址：
+
+```text
+Web: http://127.0.0.1:5174
+API: http://127.0.0.1:8787
+```
+
+本地 API 默认连接：
+
+```text
+DATABASE_URL=postgres://chatwebui:chatwebui_dev_2026@127.0.0.1:5432/chatwebui?sslmode=disable
+REDIS_ADDR=127.0.0.1:6379
+```
+
+### Docker 部署
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+上线前必须修改 `.env`：
+
+```text
+POSTGRES_PASSWORD=replace-with-a-strong-password
+APP_SECRET=replace-with-a-long-random-secret
+ADMIN_PASSWORD=replace-with-a-strong-admin-password
+CORS_ALLOWED_ORIGINS=https://your-domain.com
+```
+
+Docker 默认 Web 入口为 `http://127.0.0.1:8080`。PostgreSQL、Redis 只在 Compose 内网暴露，上传文件写入 `api-uploads` 卷。
 
 ---
 
-## 2. 页面预览
+## 2. 目录结构
 
-### 首页导航
+```text
+ChatWebUI/
+├── apps/
+│   ├── web/                         # React 18 + Vite + TypeScript 前端
+│   │   ├── src/
+│   │   │   ├── components/           # 通用 UI 组件、Shell、Modal、Tabs、图表
+│   │   │   ├── routes/               # 用户端与后台页面
+│   │   │   ├── routes/admin/         # 运营后台页面
+│   │   │   └── styles/               # tokens/base/components/client/admin CSS
+│   │   ├── Dockerfile
+│   │   └── nginx.conf
+│   └── api/                         # Go 单体 API
+│       ├── cmd/server/               # API 入口
+│       ├── internal/server/          # Handler、Store、模型适配、鉴权、计费
+│       ├── migrations/               # PostgreSQL 迁移
+│       └── Dockerfile
+├── docs/
+│   ├── TECH_SELECTION.md             # 固定技术选型和验收基线
+│   └── design-system.md              # UI 设计说明
+├── docker-compose.yml
+├── package.json
+└── go.work
+```
 
-<img src="docs/images/index.png" alt="首页导航" width="900">
+---
 
-### 用户端聊天
+## 3. 技术架构
 
-<img src="docs/images/chat-pc.png" alt="PC 端聊天页面" width="900">
+```text
+React/Vite Web
+  -> Nginx
+  -> Go HTTP API
+  -> PostgreSQL
+  -> Redis
+  -> 本机 uploads 卷
+  -> 外部模型供应商 OpenAI-compatible / 自定义适配器
+```
 
-<img src="docs/images/chat-mobile.png" alt="移动端聊天页面" width="360">
+固定技术选型：
 
-### 移动端搜索 / 历史交互
+- 前端：React 18 + Vite + TypeScript。
+- UI：沿用自研 CSS tokens，不引入大型 UI 框架。
+- 后端：Go 单体 API，标准库 HTTP 路由。
+- 数据库：PostgreSQL，保存用户、会话、消息、模型、积分、审计日志。
+- 缓存：Redis，用于匿名聊天次数、登录失败限流等短期状态。
+- 部署：VPS 使用 Docker Compose。
+- 模型配置：供应商、模型、默认模型、积分策略都存入 PostgreSQL，通过后台管理维护。
 
-<img src="docs/images/history-mobile.png" alt="移动端搜索和历史交互" width="360">
+详细技术约束见 [docs/TECH_SELECTION.md](docs/TECH_SELECTION.md)。
 
-### 个人中心
+---
 
-<img src="docs/images/personal-center-pc.png" alt="个人中心 PC 页面" width="900">
+## 4. 功能清单
+
+### 用户端
+
+- 账号注册与登录：手机号或邮箱 + 密码 + 确认密码。
+- 未登录试用：默认允许 3 次匿名对话，可通过 `ANONYMOUS_CHAT_LIMIT` 调整。
+- 多模型聊天：模型下拉显示模型 ID 和供应商。
+- 流式对话体验：发送后显示生成中状态，支持历史会话恢复。
+- 会话历史：最近列表、搜索、删除会话、删除单轮问答。
+- Markdown 渲染：支持代码块、表格、Mermaid 图表、外链新窗口打开。
+- 生图：选择图片模型、生成状态、历史记录、预览放大、重试、删除。
+- 个人中心：个人资料、头像上传、积分流水、安全设置。
 
 ### 运营后台
 
-<img src="docs/images/admin.png" alt="运营后台概览" width="900">
-
-<img src="docs/images/user-management.png" alt="用户管理" width="900">
-
-<img src="docs/images/Generate-Record.png" alt="生成记录" width="900">
-
-### 模型与接入配置
-
-<img src="docs/images/LLM.png" alt="对话模型管理" width="900">
-
-<img src="docs/images/integration.png" alt="接入配置" width="900">
-
----
-
-## 3. 目录结构
-
-```
-ChatGPTWebUI/
-├── index.html                      # 全部页面的导航入口 (推荐入口)
-├── README.md
-├── docs/
-│   ├── design-system.md            # ★ UI 设计规范 (色彩/字体/间距/组件)
-│   ├── viewer.html                 # 文档离线预览页
-│   └── images/                     # README 页面预览图
-├── assets/
-│   ├── css/
-│   │   ├── tokens.css              # Design Tokens (CSS 变量 + 暗/亮主题)
-│   │   ├── base.css                # reset + 全局排版
-│   │   ├── components.css          # 按钮、输入框、卡片、Modal、Toast...
-│   │   ├── client.css              # 用户端聊天/生图布局
-│   │   └── admin.css               # 管理后台布局
-│   └── js/
-│       └── common.js               # 主题切换 / Modal / Toast / SVG 图标 / 抽屉
-├── client/                         # 用户端 (移动优先)
-│   ├── chat.html                   # 新聊天 (居中欢迎语 + 输入条 + 快捷动作)
-│   ├── conversation.html           # 对话进行中 (含 AI 回复 / 代码块 / 操作工具栏)
-│   ├── image.html                  # 生成图片 (表单 + 历史作品网格)
-│   ├── history.html                # 历史记录 (按日期分组)
-│   ├── profile.html                # 我的 (含积分卡 / 设置 / 退出弹框)
-│   ├── points.html                 # 积分流水
-│   ├── login.html                  # 登录
-│   └── register.html               # 注册
-└── admin/                          # 运营后台
-    ├── _partials.js                # 共享侧栏与顶栏 (无需重复粘贴)
-    ├── login.html                  # 管理员登录 (含 2FA)
-    ├── dashboard.html              # ★ 仪表盘 (含 Canvas 折线 + 环图)
-    ├── ai-models.html              # AI 对话模型管理 (含编辑弹框)
-    ├── image-models.html           # 生图模型管理
-    ├── users.html                  # 用户管理 (含调整积分弹框)
-    ├── user-detail.html            # 用户详情
-    ├── generations.html            # 生成记录 (对话 + 生图)
-    ├── points-log.html             # 积分流水
-    ├── api-logs.html               # API 调用日志
-    └── system-logs.html            # 系统日志 (控制台风格)
-```
-
----
-
-## 4. 设计要点
-
-### 移动优先
-
-- 所有页面先在 320–430px 宽度下完成,断点 ≥ 1024px 才出现侧栏 / 多列。
-- 触控目标 ≥ 44×44px,主要操作贴底,留出 `env(safe-area-inset-bottom)`。
-- Modal 在 < 640px 自动变身**底部抽屉**(顶部 4px 把手)。
-
-### 暗色为默认
-
-切换主题:页面右上角"切换主题"按钮,或 `localStorage.setItem('app-theme','light')`。
-
-### Design Tokens 驱动
-
-所有色彩、字号、间距、圆角都来自 `assets/css/tokens.css` 的 CSS 变量,
-修改一处即可全局生效。详见 [`docs/design-system.md`](docs/design-system.md)。
-
-### 零依赖
-
-无任何外部 CDN / npm 包。SVG 图标内联于 `common.js`,折线图与环图为手写 Canvas,可离线运行。
+- 仪表盘：用户、会话、积分、模型使用与系统健康。
+- 模型服务：供应商接入、拉取模型、导入模型、分类列表、默认模型、权重排序、连通性测试。
+- 积分策略：按次和按 Token 两类策略，按文字、图片、语音、其他分类计费。
+- 用户管理：用户列表、详情、会话内容、登录历史、重置密码、积分调整、禁用/恢复。
+- 生成记录：聊天、生图、语音记录与错误详情。
+- 积分流水：全局积分变化查询与导出。
+- 系统日志：真实访问日志、审计日志、模型调用日志。
 
 ---
 
 ## 5. 页面清单
 
-### 用户端 (8)
+### 用户端
 
-| 页面 | 移动布局 | PC 布局 |
+| 路由 | 页面 | 说明 |
 | --- | --- | --- |
-| `chat.html` | 顶栏 + 中间欢迎语 + 底部三按钮 + 输入条 | 左侧栏 260px + 中间居中 |
-| `conversation.html` | 全屏消息流 + 底部输入条 | 同上 + 内容限宽 768px |
-| `image.html` | 表单卡 + 2 列作品网格 | 表单卡 + 3–4 列网格 |
-| `history.html` | 搜索 + 分组列表 | 同上,内容居中限宽 |
-| `profile.html` | 头像卡 + 积分卡 + 设置列表 | 同上,留白更大 |
-| `points.html` | 积分卡 + Tab + 分组流水 | 同上 |
-| `login.html` / `register.html` | 居中卡片 (max-width 400) | 同上 |
+| `/` | 聊天 | 未登录可试用，登录后保留会话历史 |
+| `/c/:id` | 历史会话 | 加载并继续指定会话 |
+| `/image` | 生图 | 图片生成、历史、预览、重试、删除 |
+| `/image/:id` | 生图记录 | 查看指定生图记录 |
+| `/profile` | 个人中心 | 用户资料、积分、安全入口 |
+| `/profile/info` | 个人资料 | 昵称、账号、方案、头像 |
+| `/profile/security` | 安全 | 修改密码 |
+| `/points` | 积分流水 | 用户积分变化 |
+| `/help` | 帮助中心 | 常见说明 |
+| `/terms` | 服务条款 | 内置协议说明 |
 
-### 管理后台 (10)
+### 运营后台
 
-| 页面 | 关键交互 |
+| 路由 | 页面 | 说明 |
+| --- | --- | --- |
+| `/admin/login` | 后台登录 | 管理员账号密码登录 |
+| `/admin/dashboard` | 仪表盘 | 运营数据与健康状态 |
+| `/admin/model-service` | 模型服务 | 供应商、模型、积分策略 |
+| `/admin/users` | 用户管理 | 用户列表、筛选、导出 |
+| `/admin/users/:id` | 用户详情 | 资料、会话、生成、积分、登录历史 |
+| `/admin/generations` | 生成记录 | 聊天、生图、语音记录 |
+| `/admin/points-log` | 积分流水 | 全局积分流水 |
+| `/admin/system-logs` | 系统日志 | 访问、审计、系统、模型日志 |
+
+---
+
+## 6. 配置说明
+
+`.env` 只保存基础设施和安全配置，不保存供应商、模型、模型价格、默认模型等业务配置。
+
+| 变量 | 说明 |
 | --- | --- |
-| `login.html` | 账号 + 密码 + 2FA |
-| `dashboard.html` | 4 项核心数据 · Canvas 折线 · 环图 · 系统健康 |
-| `ai-models.html` | 卡片网格 · 启用开关 · 编辑弹框 (endpoint/key/价格/人设) |
-| `image-models.html` | 同上,针对生图模型 |
-| `users.html` | 表格 · 多筛选 · 调整积分弹框 |
-| `user-detail.html` | 左侧资料 + 右侧多 Tab 数据 |
-| `generations.html` | 完整记录,按对话/生图分类 |
-| `points-log.html` | 全类型积分流水,4 项概览 |
-| `api-logs.html` | 上游 API 调用,带方法/状态/耗时着色 |
-| `system-logs.html` | 控制台样式 INFO/WARN/ERROR/DEBUG |
+| `WEB_PORT` | Docker Web 暴露端口，默认 `8080` |
+| `POSTGRES_DB` | PostgreSQL 数据库名 |
+| `POSTGRES_USER` | PostgreSQL 用户名 |
+| `POSTGRES_PASSWORD` | PostgreSQL 密码，生产必须修改 |
+| `APP_SECRET` | Provider Key 加密密钥，生产必须使用长随机值 |
+| `ADMIN_ACCOUNT` | 初始管理员账号，默认 `admin` |
+| `ADMIN_PASSWORD` | 初始管理员密码，生产必须设置强密码 |
+| `CORS_ALLOWED_ORIGINS` | 允许访问 API 的前端域名白名单 |
+| `ANONYMOUS_CHAT_LIMIT` | 未登录匿名聊天次数，默认 `3`，设为 `0` 可关闭 |
+| `SEED_DEMO_USER` | 是否创建演示用户，默认 `false` |
+| `SESSION_TTL_HOURS` | 登录会话有效期，默认 `168` 小时 |
 
 ---
 
-## 6. 后续技术选型建议
+## 7. 安全约定
 
-确认本套静态原型 UI 后,推荐演进路径(供决策时参考):
-
-| 维度 | 推荐 | 备选 |
-| --- | --- | --- |
-| **前端框架** | Vue 3 + Vite (生态友好、模板贴近 HTML) | React 18 + Vite |
-| **UI 库** | 自研基于本设计系统封装 + 引入 [Lucide](https://lucide.dev) 图标 | Naive UI / shadcn |
-| **跨端方案** | [Tauri](https://tauri.app) → PC 安装包<br/>[Capacitor](https://capacitorjs.com) → Android/iOS 安装包 | Electron / React Native |
-| **状态/请求** | Pinia + 原生 `fetch` + SSE | Tanstack Query |
-| **样式** | 继续使用本 tokens.css + 组件 CSS,可选迁移到 UnoCSS / Tailwind | CSS-in-JS |
-| **后端** | Node.js (NestJS) 或 Python (FastAPI) | Go (Gin) |
-| **数据库** | PostgreSQL + Redis | MySQL |
-| **图标** | Lucide (与 common.js 内置图标一致) | Tabler |
-| **图表** | Chart.js / ECharts (替换 dashboard 中的手写 Canvas) | Recharts |
-| **AI 接入** | OpenAI 兼容接口 + Anthropic SDK,流式 SSE | LangChain.js |
-| **生图接入** | OpenAI Images / Replicate API / 本地 ComfyUI | SD-WebUI API |
-
-### 包装为安装包
-
-1. 将整个站点保持纯 HTML/CSS/JS 即可被 **Capacitor** 直接打包为 Android APK / iOS IPA。
-2. PC 端使用 **Tauri**(体积约 5MB)或 Electron。
-3. WebView 内通过 `window.bridge` 注入本地能力(如分享、文件保存)。
+- Provider API Key 加密存入 PostgreSQL，前端只展示脱敏值。
+- 前后台 Token 分离存储，避免用户端和后台互相覆盖登录态。
+- 后台 API 必须管理员 Token，普通用户访问返回 403。
+- 生产公网监听时，弱 `APP_SECRET`、默认管理员密码、`*` CORS 会阻止 API 启动。
+- 登录失败会限流，匿名聊天次数通过 Redis 限制。
+- 普通 JSON 请求体默认限制 4MB；multipart 上传限制 25MB；头像单文件限制 8MB。
+- 本地上传文件存入 `UPLOAD_DIR`，Docker 环境写入 `api-uploads` 卷。
 
 ---
 
-## 7. 已知约定
+## 8. 开发命令
 
-- 所有日期、用户名、对话内容均为**示例数据**。
-- 所有 `<form>` 不会实际提交,登录按钮直接跳转到 `chat.html` / `dashboard.html` 以便走查。
-- 切换主题保存在 `localStorage.app-theme`。
-- 侧栏在窄屏下点击遮罩或主体外区域自动收起。
+```bash
+npm --prefix apps/web install
+npm run dev:api
+npm run dev:web
+npm run test:api
+npm run test:web
+npm run build:web
+```
+
+单独执行：
+
+```bash
+go test ./apps/api/...
+npm --prefix apps/web run test
+npm --prefix apps/web run build
+```
 
 ---
 
-## 8. 走查清单 (建议)
+## 9. 发布流程
 
-- [ ] 在 iPhone SE / iPhone 15 / iPad / 1280 PC 四档屏幕分别走完所有页面
-- [ ] 在 Chrome / Safari / 微信 H5 测试输入框聚焦后的虚拟键盘遮挡情况
-- [ ] 切换暗色 / 亮色主题,确认对比度
-- [ ] 验证表格在窄屏下是否横向滚动
-- [ ] 验证 Modal 在 < 640px 是否变为底部抽屉
-- [ ] 验证侧栏抽屉的开/关动画
+1. 设置 `.env` 中的强密码和域名白名单。
+2. 确认 VPS 已安装 Docker 和 Docker Compose。
+3. 执行 `docker compose up -d --build`。
+4. 访问 `/healthz` 确认 API、PostgreSQL、Redis 正常。
+5. 使用管理员账号进入 `/admin/login`。
+6. 在后台模型服务中新增供应商、拉取模型、导入模型并设置默认模型。
+7. 完成一次真实聊天、生图、积分扣费和后台记录核对。
 
-走查无问题后即可进入正式技术选型与开发。
+---
+
+## 10. 走查清单
+
+- 注册、登录、退出、修改密码可用。
+- 未登录对话 3 次后弹出登录/注册弹窗。
+- 登录后新会话进入最近列表，历史会话可继续对话。
+- 模型服务可新增供应商、拉取模型、导入模型、单模型测试。
+- 默认模型必须是所有人可见模型。
+- 图片模型不会在“测试当前供应商非图片模型”中被批量测试。
+- 生图记录可查看、放大、重试、删除。
+- 用户详情能查看会话内容、生成记录、积分流水、登录历史。
+- 系统日志显示真实访问、审计和模型调用记录。
+- 浅色和深色模式下按钮、弹框、Markdown、Mermaid 图表显示正常。

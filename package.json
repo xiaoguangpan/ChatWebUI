@@ -1,0 +1,12 @@
+{
+  "name": "chatwebui",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:web": "npm --prefix apps/web run dev",
+    "build:web": "npm --prefix apps/web run build",
+    "test:web": "npm --prefix apps/web run test",
+    "dev:api": "go run ./apps/api/cmd/server",
+    "test:api": "go test ./apps/api/..."
+  }
+}

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+**/dist/
+.env
+.env.*
+!.env.example
+coverage/
+.vite/
+*.log
+*.tsbuildinfo
+*.exe
+apps/api/uploads/
+docs/LLM.md
